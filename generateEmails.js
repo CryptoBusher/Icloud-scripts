@@ -13,7 +13,7 @@ const fillInput = (input, value) => {
 
 let batchIndex = 1;
 for (let i = startIndex; i<=endIndex; i++) {
-    const addBtn = document.getElementsByTagName('iframe')[0].contentWindow.document.body.querySelectorAll("[title='Add']")[0];
+    const addBtn = document.getElementsByTagName('iframe')[0].contentWindow.document.querySelector('button[type="button"][title="Add"]');
     addBtn.click();
     await sleep(1000);
 
@@ -22,11 +22,11 @@ for (let i = startIndex; i<=endIndex; i++) {
     await sleep(1000); 
 
     const createNewEmailBtnXpath = "//button[contains(text(),'Create email address')]";
-    var createNewEmailBtn = document.getElementsByTagName('iframe')[0].contentWindow.document.getElementsByTagName("button")[2];
+    let createNewEmailBtn = document.getElementsByTagName('iframe')[0].contentWindow.document.getElementsByTagName("button")[2];
     createNewEmailBtn.click();
     await sleep(5000);
 
-    var backBtn = document.getElementsByTagName('iframe')[0].contentWindow.document.getElementsByTagName("button")[1];
+    let backBtn = document.getElementsByTagName('iframe')[0].contentWindow.document.getElementsByTagName("button")[1];
     backBtn.click();
     await sleep(1000);
     
