@@ -1,4 +1,9 @@
-const emailsData = document.querySelectorAll('.CardList > li')
+let emailsData;
+
+emailsData = document.getElementsByTagName('iframe')[0].contentWindow.document.getElementsByClassName("CardList")[0].getElementsByTagName("li");
+if (!emailsData) {
+    emailsData = document.querySelectorAll('.CardList > li')
+}
 
 const output = {};
 for (const data of emailsData) {
