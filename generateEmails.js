@@ -82,7 +82,7 @@ const createEmail = async (emailName) => {
     let backBtn = iframeDoc.querySelectorAll("button")[1];
     if (backBtn) {
         backBtn.click();
-        await sleep(1000);
+        await sleep(5000);
     } else {
         throw new Error('back button not found');
     }
