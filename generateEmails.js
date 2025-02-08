@@ -1,70 +1,109 @@
-const startIndex = 1;
-const endIndex = 100;
-const batchLimit = 5;
-
-const sleep = (ms) => {
-    return new Promise(resolve => setTimeout(resolve, ms));
-};
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const fillInput = (input, value) => {
-    input.setAttribute('value', value);
-    input.dispatchEvent(new Event('input', { bubbles: true }));
+    if (input) {
+        input.setAttribute('value', value);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    } else {
+        console.error('fillInput: Input element not found');
+    }
+};
+
+const getEmailsData = () => {
+    let emailsLines = document.querySelector('iframe')?.contentWindow?.document
+        ?.querySelector(".CardList")?.querySelectorAll("li");
+
+    if (!emailsLines || emailsLines.length === 0) {
+        emailsLines = document.querySelectorAll('.CardList > li');
+    }
+
+    const emailsData = {};
+    const numericNames = new Set();
+
+    for (const data of emailsLines) {
+        const emailName = data.querySelector("h2")?.innerText.trim();
+        const emailAddress = data.querySelector("span.searchable-card-subtitle")?.innerText.trim();
+
+        if (emailName && emailAddress) {
+            emailsData[emailName] = emailAddress;
+
+            if (/^\d+$/.test(emailName)) {
+                numericNames.add(parseInt(emailName, 10));
+            }
+        }
+    }
+
+    return { emailsData, numericNames };
+};
+
+const getNextName = () => {
+    const { numericNames } = getEmailsData();
+
+    if (numericNames.size === 0) return 1;
+
+    const sortedNumbers = [...numericNames].sort((a, b) => a - b);
+
+    for (let i = 1; i <= sortedNumbers[sortedNumbers.length - 1]; i++) {
+        if (!numericNames.has(i)) {
+            return i;
+        }
+    }
+
+    return sortedNumbers[sortedNumbers.length - 1] + 1;
 };
 
 const createEmail = async (emailName) => {
-    let addBtn;
-    let labelInput;
-    let createNewEmailBtn;
-    let backBtn;
+    const iframeDoc = document.querySelector('iframe')?.contentWindow?.document || document;
 
-    // click add button
-    addBtn = document.getElementsByTagName('iframe')[0].contentWindow.document.querySelector('button[type="button"][title="Add"]');
-    if (!addBtn) {
-        addBtn = document.querySelector('.AddButton > button')
+    let addBtn = iframeDoc.querySelector('button[title="Add"]') || document.querySelector('.AddButton > button');
+    if (addBtn) {
+        addBtn.click();
+        await sleep(1000);
+    } else {
+        throw new Error('add button not found');
     }
-    addBtn.click();
-    await sleep(1000);
 
-    // input label
-    labelInput = document.getElementsByTagName('iframe')[0].contentWindow.document.getElementsByTagName("input")[0];
-    if (!labelInput) {
-        labelInput = document.getElementsByTagName("input")[0];
+    let labelInput = iframeDoc.querySelector("input");
+    if (labelInput) {
+        fillInput(labelInput, emailName);
+        await sleep(1000);
+    } else {
+        throw new Error('label input not found');
     }
-    fillInput(labelInput, emailName);
-    await sleep(1000);
 
-    // click create new email
-    createNewEmailBtn = document.getElementsByTagName('iframe')[0].contentWindow.document.getElementsByTagName("button")[2];
-    if (!createNewEmailBtn) {
-        createNewEmailBtn = document.getElementsByTagName("button")[2];
+    let createNewEmailBtn = iframeDoc.querySelectorAll("button")[2];
+    if (createNewEmailBtn) {
+        createNewEmailBtn.click();
+        await sleep(5000);
+    } else {
+        throw new Error('create new email button not found');
     }
-    createNewEmailBtn.click();
-    await sleep(5000);
 
-    // click back button
-    backBtn = document.getElementsByTagName('iframe')[0].contentWindow.document.getElementsByTagName("button")[1];
-    if (!backBtn) {
-        backBtn = document.getElementsByTagName("button")[1];
+    let backBtn = iframeDoc.querySelectorAll("button")[1];
+    if (backBtn) {
+        backBtn.click();
+        await sleep(1000);
+    } else {
+        throw new Error('back button not found');
     }
-    backBtn.click();
-    await sleep(1000);
 };
 
-const start = async() => {
-    let batchIndex = 1;
-    for (let i = startIndex; i<=endIndex; i++) {
-        await createEmail(i);
-        
-        console.log(`${i} - success, ${batchIndex}/${batchLimit}`)
-        batchIndex++;
-
-        if (batchIndex > batchLimit) {
-            batchIndex = 1;
-            console.log('Sleeping 2.2 hours');
-            await sleep(1000 * 60 * 60 * 2.2); // 2.2 hours
+const start = async () => {
+    while (true) {
+        for (let i = 0; i < 5; i++) {
+            try {
+                const name = getNextName();
+                console.log(`${name} - registering`);
+                await createEmail(name);
+                console.log(`${name} - email registered`);
+            } catch (e) {
+                console.error(`Failed to register email, reason: ${e.message}`);
+            }
         }
+
+        console.log('Sleeping 2.2 hours...');
+        await sleep(1000 * 60 * 60 * 2.2); // 2.2 hours
     }
-}
+};
 
 await start();
-console.log('Finished');
