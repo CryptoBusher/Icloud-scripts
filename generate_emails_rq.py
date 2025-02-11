@@ -180,13 +180,13 @@ async def register_accounts(icloud_manager: IcloudEmailManager):
                     except EmailsLimitReachedException:
                         return
                     except BatchLimitReachedException:
-                        print(f'{icloud_manager.account.name} - batch limit reached')
+                        logger.warning(f'{icloud_manager.account.name} - batch limit reached')
                         break
                     except Exception as e:
                         logger.error(f'{icloud_manager.account.name} - {e}')
                         continue
 
-                logger.info(f'{icloud_manager.account.name} registered {registered_count}, available {available_count}')
+                logger.info(f'{icloud_manager.account.name} - registered {registered_count}, available {available_count}')
 
             except Exception as e:
                 logger.error(f'{icloud_manager.account.name} - {e}')
