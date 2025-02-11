@@ -101,7 +101,7 @@ const start = async () => {
             }
         }
 
-        console.log('Sleeping 2.2 hours...');
+        console.log('Sleeping 1.1 hours...');
         await sleep(1000 * 60 * 60 * 1.1); // 1.1 hours
     }
 };
