@@ -29,6 +29,9 @@ def set_logger():
 class EmailsLimitReachedException(Exception):
     pass
 
+class BatchLimitReachedException(Exception):
+    pass
+
 
 @dataclass
 class IcloudAccount:
@@ -46,7 +49,7 @@ class IcloudEmailManager:
     BASE_URL = 'https://icloud-account.icloudapp.net/'
     MAX_EMAILS = 750
     BATCH_SIZE = 5
-    BATCH_DELAY_HOURS = 2
+    BATCH_DELAY_HOURS = 1
     API_CALL_DELAYS_SEC = [5, 15]
 
     def __init__(self, account: IcloudAccount):
@@ -140,7 +143,10 @@ class IcloudEmailManager:
 
         json_response = response.json()
         if not json_response["success"]:
-            raise Exception(f'Failed to register domain: {domain}, reason: {json_response["error"]["errorMessage"]}')
+            if json_response["error"]["errorCode"] == "-41015":
+                raise BatchLimitReachedException()
+            else:
+                raise Exception(f'Failed to register domain: {domain}, reason: {json_response["error"]["errorMessage"]}')
 
         logger.success(f'{self.account.name} - registered domain: {domain}')
 
@@ -173,6 +179,9 @@ async def register_accounts(icloud_manager: IcloudEmailManager):
                         continue
                     except EmailsLimitReachedException:
                         return
+                    except BatchLimitReachedException:
+                        print(f'{icloud_manager.account.name} - batch limit reached')
+                        break
                     except Exception as e:
                         logger.error(f'{icloud_manager.account.name} - {e}')
                         continue
