@@ -12,13 +12,16 @@ from config import config
 
 
 def set_logger():
+    logs_path = Path("logs")
+    logs_path.mkdir(parents=True, exist_ok=True)
+
     logger.remove()
     log_format = "<white>{time:YYYY-MM-DD HH:mm:ss}</white> | <level>{level: <8}</level> | <white>{message}</white>"
     logger.add(stderr,
                level="INFO",
                format=log_format)
 
-    logger.add(Path("logs") / "app_{time:YYYY-MM-DD}.log",
+    logger.add(logs_path / "app_{time:YYYY-MM-DD}.log",
                level="DEBUG",
                format=log_format,
                rotation="00:00",
