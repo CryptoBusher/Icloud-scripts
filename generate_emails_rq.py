@@ -1,9 +1,29 @@
 import json
+from sys import stderr
 import asyncio
+from pathlib import Path
 from random import randint
-import httpx
 from dataclasses import dataclass
+
+from loguru import logger
+import httpx
+
 from config import config
+
+
+def set_logger():
+    logger.remove()
+    log_format = "<white>{time:YYYY-MM-DD HH:mm:ss}</white> | <level>{level: <8}</level> | <white>{message}</white>"
+    logger.add(stderr,
+               level="INFO",
+               format=log_format)
+
+    logger.add(Path("logs") / "app_{time:YYYY-MM-DD}.log",
+               level="DEBUG",
+               format=log_format,
+               rotation="00:00",
+               retention="7 days",
+               compression="zip")
 
 
 class EmailsLimitReachedException(Exception):
@@ -122,7 +142,7 @@ class IcloudEmailManager:
         if not json_response["success"]:
             raise Exception(f'Failed to register domain: {domain}, reason: {json_response["error"]["errorMessage"]}')
 
-        print(f'{self.account.name} - registered domain: {domain}')
+        logger.success(f'{self.account.name} - registered domain: {domain}')
 
     async def close(self):
         await self.client.aclose()
@@ -135,28 +155,36 @@ async def register_accounts(icloud_manager: IcloudEmailManager):
         while True:
             try:
                 registered_emails = await icloud_manager.fetch_registered_emails()
+
                 if len(registered_emails) == icloud_manager.MAX_EMAILS:
                     break
 
                 available_labels = icloud_manager.find_available_email_labels(registered_emails)
-                print(f'{icloud_manager.account.name} - total available labels: {len(available_labels)}')
+                logger.info(f'{icloud_manager.account.name} - total available labels: {len(available_labels)}')
+
+                registered_count = len(registered_emails)
+                available_count = len(available_labels)
 
                 for label in available_labels[:icloud_manager.BATCH_SIZE]:
                     try:
                         await icloud_manager.register_new_email(str(label))
+                        registered_count += 1
+                        available_count -= 1
                         continue
                     except EmailsLimitReachedException:
                         return
                     except Exception as e:
-                        print(f'{icloud_manager.account.name} - {e}')
+                        logger.error(f'{icloud_manager.account.name} - {e}')
                         continue
 
+                logger.info(f'{icloud_manager.account.name} registered {registered_count}, available {available_count}')
+
             except Exception as e:
-                print(f'{icloud_manager.account.name} - {e}')
+                logger.error(f'{icloud_manager.account.name} - {e}')
                 continue
             finally:
                 delay_sec = (icloud_manager.BATCH_DELAY_HOURS * 60 * 60) + randint(10, 300)
-                print(f'{icloud_manager.account.name} - sleeping {delay_sec} seconds')
+                logger.info(f'{icloud_manager.account.name} - sleeping {delay_sec} seconds')
                 await asyncio.sleep(delay_sec)
     finally:
         await icloud_manager.close()
@@ -173,4 +201,5 @@ async def main():
 
 
 if __name__ == '__main__':
+    set_logger()
     asyncio.run(main())
