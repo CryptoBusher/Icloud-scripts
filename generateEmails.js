@@ -1,11 +1,15 @@
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+const getTimestamp = () => {
+    return new Date(Date.now()).toLocaleString();
+};
+
 const fillInput = (input, value) => {
     if (input) {
         input.setAttribute('value', value);
         input.dispatchEvent(new Event('input', { bubbles: true }));
     } else {
-        console.error('fillInput: Input element not found');
+        throw new Error('fillInput: input element not found');
     }
 };
 
@@ -93,15 +97,15 @@ const start = async () => {
         for (let i = 0; i < 5; i++) {
             try {
                 const name = getNextName();
-                console.log(`${name} - registering`);
+                console.log(`${getTimestamp()}: ${name} - registering`);
                 await createEmail(name);
-                console.log(`${name} - email registered`);
+                console.log(`${getTimestamp()}: ${name} - email registered`);
             } catch (e) {
-                console.error(`Failed to register email, reason: ${e.message}`);
+                console.error(`${getTimestamp()}: failed to register email, reason: ${e.message}`);
             }
         }
 
-        console.log('Sleeping 1.1 hours...');
+        console.log(`${getTimestamp()} - sleeping 1.1 hours...`);
         await sleep(1000 * 60 * 60 * 1.1); // 1.1 hours
     }
 };
