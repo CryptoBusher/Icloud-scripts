@@ -6,14 +6,17 @@ const getEmailsData = () => {
         emailsLines = document.querySelectorAll('.CardList > li');
     }
 
-    const emailsData = {};
+    const emailsData = new Map();
 
     for (const data of emailsLines) {
         const emailName = data.querySelector("h2")?.innerText.trim();
         const emailAddress = data.querySelector("span.searchable-card-subtitle")?.innerText.trim();
 
         if (emailName && emailAddress) {
-            emailsData[emailName] = emailAddress;
+            if (!emailsData.has(emailName)) {
+                emailsData.set(emailName, []);
+            }
+            emailsData.get(emailName).push(emailAddress);
         }
     }
 
@@ -22,9 +25,12 @@ const getEmailsData = () => {
 
 const emailsData = getEmailsData();
 
-if (Object.keys(emailsData).length > 0) {
-    const emailsDataString = Object.entries(emailsData)
-        .map(([key, value]) => `${key}:${value}`)
+const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+
+if (emailsData.size > 0) {
+    const emailsDataString = [...emailsData.entries()]
+        .sort(([a], [b]) => collator.compare(a, b))
+        .map(([label, emails]) => emails.map(email => `${label}: ${email}`).join("\n"))
         .join('\n');
 
     copy(emailsDataString);
