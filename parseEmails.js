@@ -30,7 +30,7 @@ const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "bas
 if (emailsData.size > 0) {
     const emailsDataString = [...emailsData.entries()]
         .sort(([a], [b]) => collator.compare(a, b))
-        .map(([label, emails]) => emails.map(email => `${label}: ${email}`).join("\n"))
+        .map(([label, emails]) => emails.map(email => `${label}:${email}`).join("\n"))
         .join('\n');
 
     copy(emailsDataString);
